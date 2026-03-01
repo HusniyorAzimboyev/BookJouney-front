@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Journey - Kitoblar Olami</title>
+    <link rel="icon" href="/static/img/favicon.png" type="image/png" sizes="40x40">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            -webkit-backdrop-filter: blur(20px);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .book-card {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.95);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .book-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.5s;
+        }
+        
+        .book-card:hover::before {
+            left: 100%;
+        }
+        
+        .book-card:hover {
+            transform: translateY(-12px) scale(1.02);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+        }
+        
+        .floating {
+            animation: floating 6s ease-in-out infinite;
+        }
+        
+        @keyframes floating {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        .scroll-smooth {
+            scroll-behavior: smooth;
+        }
+        
+        .text-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .shimmer {
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        
+        .pulse-glow {
+            animation: pulseGlow 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 20px rgba(102, 126, 234, 0.3); }
+            50% { box-shadow: 0 0 40px rgba(102, 126, 234, 0.6); }
+        }
+        
+        .slide-in {
+            animation: slideIn 0.8s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .premium-gradient {
+            background: linear-gradient(135deg, #667eea, #764ba2, #f093fb, #f5576c);
+            background-size: 400% 400%;
+            animation: gradientShift 20s ease infinite;
+        }
+        
+        .hero-pattern {
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(240, 147, 251, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(102, 126, 234, 0.1) 0%, transparent 50%);
+        }
+        
+        .card-hover-lift {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .card-hover-lift:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        .text-shadow-glow {
+            text-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+        }
+        
+        .border-gradient {
+            border: 2px solid transparent;
+            background: linear-gradient(white, white) padding-box,
+                        linear-gradient(135deg, #667eea, #764ba2, #f093fb) border-box;
+        }
+        
+        /* Scroll Animations */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s ease-out;
+        }
+        
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .slide-in-left {
+            opacity: 0;
+            transform: translateX(-50px);
+            transition: all 0.8s ease-out;
+        }
+        
+        .slide-in-left.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        .slide-in-right {
+            opacity: 0;
+            transform: translateX(50px);
+            transition: all 0.8s ease-out;
+        }
+        
+        .slide-in-right.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        .scale-in {
+            opacity: 0;
+            transform: scale(0.8);
+            transition: all 0.8s ease-out;
+        }
+        
+        .scale-in.visible {
+            opacity: 1;
+            transform: scale(1);
+        }
+        
+        .stagger-1 { transition-delay: 0.1s; }
+        .stagger-2 { transition-delay: 0.2s; }
+        .stagger-3 { transition-delay: 0.3s; }
+        .stagger-4 { transition-delay: 0.4s; }
+        .stagger-5 { transition-delay: 0.5s; }
+        .logo-container {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            background-size: 200% 200%;
+            animation: logoGradient 3s ease infinite;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .logo-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: logoShimmer 2s infinite;
+        }
+        
+        @keyframes logoGradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        @keyframes logoShimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+        
+        .logo-text {
+            font-weight: 900;
+            letter-spacing: -0.5px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .logo-inner {
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            box-shadow: 
+                0 4px 6px rgba(0,0,0,0.1),
+                0 1px 3px rgba(0,0,0,0.08),
+                inset 0 1px 0 rgba(255,255,255,0.9);
+            position: relative;
+        }
+        
+        .logo-inner::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background: linear-gradient(135deg, rgba(255,255,255,0.8) 0%, transparent 50%);
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="scroll-smooth">
+    <!-- loading overlay -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-white/50 flex items-center justify-center z-50" style="display:none;">
+        <i class="fas fa-spinner fa-pulse text-4xl text-gray-700"></i>
+    </div>
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full glass-effect shadow-xl z-50 transition-all duration-300" id="navbar">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-12 h-12 logo-container rounded-xl flex items-center justify-center shadow-lg pulse-glow">
+                        <div class="w-8 h-8 logo-inner rounded-lg flex items-center justify-center">
+                            <span class="logo-text text-purple-600 font-bold text-lg">BJ</span>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="text-2xl font-bold text-gradient">Book Journey</span>
+                        <div class="text-xs text-gray-500 font-medium">Premium Reading Platform</div>
+                    </div>
+                </div>
+                <div class="hidden md:flex items-center space-x-2">
+                    <a href="#home" class="text-gray-700 hover:text-purple-600 transition-all duration-200 px-4 py-2 rounded-lg hover:bg-purple-50 font-medium" data-translate="nav.home">Bosh sahifa</a>
+                    <a href="#ai-search" class="text-gray-700 hover:text-purple-600 transition-all duration-200 px-4 py-2 rounded-lg hover:bg-purple-50 font-medium" data-translate="nav.ai_search">AI Qidiruv</a>
+                    <a href="#literature" class="text-gray-700 hover:text-purple-600 transition-all duration-200 px-4 py-2 rounded-lg hover:bg-purple-50 font-medium" data-translate="nav.literature">Adabiyot</a>
+                    <a href="#trending" class="text-gray-700 hover:text-purple-600 transition-all duration-200 px-4 py-2 rounded-lg hover:bg-purple-50 font-medium" data-translate="nav.trending">Trend</a>
+                    <a href="#challenge" class="text-gray-700 hover:text-purple-600 transition-all duration-200 px-4 py-2 rounded-lg hover:bg-purple-50 font-medium" data-translate="nav.challenge">Challenge</a>
+                    <button class="premium-gradient text-white px-6 py-3 rounded-full font-semibold hover:shadow-lg transition-all duration-300 transform hover:scale-105" id="loginBtn" title="Tizimga kirish">
+                        <i class="fas fa-sign-in-alt mr-2"></i>
+                        <span data-translate="nav.login">Kirish</span>
+                    </button>
+                    <!-- Language Selector -->
+                    <div class="flex items-center space-x-1 bg-white rounded-lg shadow-md p-1">
+                        <button class="language-btn px-3 py-2 rounded text-sm font-medium transition-all duration-200" data-lang="uz">UZ</button>
+                        <button class="language-btn px-3 py-2 rounded text-sm font-medium transition-all duration-200" data-lang="ru">RU</button>
+                        <button class="language-btn px-3 py-2 rounded text-sm font-medium transition-all duration-200" data-lang="en">EN</button>
+                    </div>
+                </div>
+                <button class="md:hidden text-gray-700" id="mobileMenuBtn" title="Mobil menyu">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="gradient-bg min-h-screen flex items-center pt-20 hero-pattern relative overflow-hidden">
+        <div class="absolute inset-0">
+            <div class="absolute top-0 left-0 w-64 h-64 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 floating"></div>
+            <div class="absolute top-0 right-0 w-96 h-96 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 floating" style="animation-delay: 2s;"></div>
+            <div class="absolute bottom-0 left-1/2 w-80 h-80 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 floating" style="animation-delay: 4s;"></div>
+        </div>
+        
+        <div class="container mx-auto px-6 relative z-10">
+            <div class="grid md:grid-cols-2 gap-16 items-center">
+                <div class="text-white slide-in">
+                    <div class="mb-6">
+                        <span class="inline-block px-4 py-2 bg-white/20 backdrop-blur-md rounded-full text-sm font-semibold text-black" data-translate="hero.platform">
+                            Zamonaviy Platforma
+                        </span>
+                    </div>
+                    <h1 class="text-5xl md:text-7xl font-black mb-6 leading-tight">
+                        <span class="text-black" data-translate="hero.title1">AI bilan</span><br>
+                        <span class="block text-6xl md:text-8xl font-black text-black" data-translate="hero.title2">Kitoblar Dunyosi</span>
+                    </h1>
+                    <p class="text-xl md:text-2xl mb-8 text-black leading-relaxed">
+                        Book Journey - <span class="font-semibold">sun'iy intellekt</span> tomonidan boshqariladigan 
+                        <span class="font-semibold text-purple-600" data-translate="hero.platform">zamonaviy platforma</span>.<br>
+                        <span data-translate="hero.description">Aqlli tavsiyalar, ovozli o'qish va shaxsiy tahlillar.</span>
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <button class="bg-white text-purple-600 px-8 py-4 rounded-full font-bold hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl">
+                            <i class="fas fa-rocket mr-3"></i>
+                            <span class="text-black" data-translate="hero.start">Boshlash</span>
+                        </button>
+                        <button class="border-3 border-white/40 text-black px-8 py-4 rounded-full font-bold hover:bg-white/20 hover:border-white transition-all duration-300 transform hover:scale-105">
+                            <i class="fas fa-play-circle mr-3"></i>
+                            <span class="text-black" data-translate="hero.demo">Demo</span>
+                        </button>
+                    </div>
+                    
+                    <div class="grid grid-cols-3 gap-6 mt-12">
+                        <div class="text-center">
+                            <div class="w-16 h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mb-3">
+                                <i class="fas fa-book text-2xl text-black"></i>
+                            </div>
+                            <div class="text-3xl font-bold text-black" data-translate="hero.books">10K+</div>
+                            <div class="text-black text-sm" data-translate="hero.books">Kitoblar</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="w-16 h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mb-3">
+                                <i class="fas fa-users text-2xl text-black"></i>
+                            </div>
+                            <div class="text-3xl font-bold text-black" data-translate="hero.users">5K+</div>
+                            <div class="text-black text-sm" data-translate="hero.users">Foydalanuvchilar</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="w-16 h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mb-3">
+                                <i class="fas fa-star text-2xl text-black"></i>
+                            </div>
+                            <div class="text-3xl font-bold text-black" data-translate="hero.rating">4.9</div>
+                            <div class="text-black text-sm" data-translate="hero.rating">O'rtacha reyting</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="relative">
+                    <div class="floating">
+                        <div class="relative">
+                            <div class="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-pink-600/20 rounded-3xl blur-2xl"></div>
+                            <!-- Book Carousel -->
+                            <div id="bookCarousel" class="relative rounded-3xl shadow-2xl border-4 border-white/20 overflow-hidden">
+                                <div class="carousel-container relative h-96">
+                                    <div class="carousel-slide absolute inset-0 transition-opacity duration-1000">
+                                        <img src="https://picsum.photos/seed/book1/600/400" alt="Classic Literature" class="w-full h-full object-cover">
+                                        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6">
+                                            <h3 class="text-white text-2xl font-bold mb-2">Klassik Adabiyotlar</h3>
+                                            <p class="text-white/80">Dunyo adabiyotining cho'qqilari</p>
+                                        </div>
+                                    </div>
+                                    <div class="carousel-slide absolute inset-0 transition-opacity duration-1000 opacity-0">
+                                        <img src="https://picsum.photos/seed/book2/600/400" alt="Modern Fiction" class="w-full h-full object-cover">
+                                        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6">
+                                            <h3 class="text-white text-2xl font-bold mb-2">Zamonaviy Romanlar</h3>
+                                            <p class="text-white/80">Eng so'nggi bestsellerlar</p>
+                                        </div>
+                                    </div>
+                                    <div class="carousel-slide absolute inset-0 transition-opacity duration-1000 opacity-0">
+                                        <img src="https://picsum.photos/seed/book3/600/400" alt="Science Fiction" class="w-full h-full object-cover">
+                                        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6">
+                                            <h3 class="text-white text-2xl font-bold mb-2">Fantastika Dunyosi</h3>
+                                            <p class="text-white/80">Koinot sarguzashtlari</p>
+                                        </div>
+                                    </div>
+                                    <div class="carousel-slide absolute inset-0 transition-opacity duration-1000 opacity-0">
+                                        <img src="https://picsum.photos/seed/book4/600/400" alt="Poetry Collection" class="w-full h-full object-cover">
+                                        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6">
+                                            <h3 class="text-white text-2xl font-bold mb-2">She'riyat To'plami</h3>
+                                            <p class="text-white/80">Lirik asarlardan zavqlanish</p>
+                                        </div>
+                                    </div>
+                                    <div class="carousel-slide absolute inset-0 transition-opacity duration-1000 opacity-0">
+                                        <img src="https://picsum.photos/seed/book5/600/400" alt="Business Books" class="w-full h-full object-cover">
+                                        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6">
+                                            <h3 class="text-white text-2xl font-bold mb-2">Biznes Kitoblari</h3>
+                                            <p class="text-white/80">Muvaffaqiyat sirlari</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Carousel Indicators -->
+                                <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+                                    <button class="carousel-indicator w-2 h-2 bg-white rounded-full transition-all duration-300" data-slide="0"></button>
+                                    <button class="carousel-indicator w-2 h-2 bg-white/50 rounded-full transition-all duration-300" data-slide="1"></button>
+                                    <button class="carousel-indicator w-2 h-2 bg-white/50 rounded-full transition-all duration-300" data-slide="2"></button>
+                                    <button class="carousel-indicator w-2 h-2 bg-white/50 rounded-full transition-all duration-300" data-slide="3"></button>
+                                    <button class="carousel-indicator w-2 h-2 bg-white/50 rounded-full transition-all duration-300" data-slide="4"></button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-4 mt-8">
+                            <div class="bg-white/10 backdrop-blur-md rounded-xl p-4 text-center">
+                                <i class="fas fa-brain text-2xl text-black mb-2"></i>
+                                <div class="text-black font-semibold">AI Tavsiyalar</div>
+                            </div>
+                            <div class="bg-white/10 backdrop-blur-md rounded-xl p-4 text-center">
+                                <i class="fas fa-microphone text-2xl text-black mb-2"></i>
+                                <div class="text-black font-semibold">Ovozli O'qish</div>
+                            </div>
+                            <div class="bg-white/10 backdrop-blur-md rounded-xl p-4 text-center">
+                                <i class="fas fa-chart-line text-2xl text-black mb-2"></i>
+                                <div class="text-black font-semibold">Analitika</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- AI Search Section -->
+    <section id="ai-search" class="py-20 bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 relative overflow-hidden">
+        <div class="absolute inset-0">
+            <div class="absolute top-0 left-0 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 floating"></div>
+            <div class="absolute bottom-0 right-0 w-64 h-64 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 floating" style="animation-delay: 3s;"></div>
+        </div>
+        
+        <div class="container mx-auto px-6 relative z-10">
+            <div class="text-center mb-16 fade-in">
+                <div class="inline-block px-6 py-3 bg-white/20 backdrop-blur-md rounded-full mb-6">
+                    <span class="text-purple-600 font-bold text-lg">AI Smart Search</span>
+                </div>
+                <h2 class="text-5xl font-bold mb-4 text-black" data-translate="ai.title">Sun'iy Intellekt Tavsiyalari</h2>
+                <p class="text-xl text-black" data-translate="ai.subtitle">AI sizga eng mos kitoblarni topadi</p>
+            </div>
+            
+            <div class="max-w-4xl mx-auto fade-in stagger-1">
+                <div class="bg-white rounded-3xl shadow-2xl p-10 backdrop-blur-md border border-white/30">
+                    <div class="mb-8">
+                        <label class="block text-black text-lg font-semibold mb-4" data-translate="ai.label">Nima qidirmoqchisiz?</label>
+                        <div class="relative">
+                            <textarea 
+                                id="aiSearchInput"
+                                placeholder="Menga motivatsion, qisqa va hayotiy kitob kerak. Ishga tayyorlanayotganman, kundalik ruhiy holatnimni yaxshilashim kerak..."
+                                data-translate-placeholder="ai.placeholder"
+                                class="w-full px-6 py-5 pr-20 border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-200 resize-none text-lg transition-all duration-300 text-black"
+                                rows="4"
+                            ></textarea>
+                            <button id="aiSearchBtn" class="absolute bottom-4 right-4 premium-gradient text-white px-8 py-3 rounded-2xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
+                                <i class="fas fa-magic mr-2"></i>
+                                <span class="font-bold" data-translate="ai.search">AI Izlash</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="aiRecommendations" class="grid md:grid-cols-3 gap-6">
+                        <!-- AI recommendations will appear here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Literature Sections -->
+    <section id="literature" class="py-20 bg-gray-50">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-12 fade-in">
+                <h2 class="text-4xl font-bold mb-4 text-black" data-translate="literature.title">O'zbek + Jahon Adabiyoti</h2>
+                <p class="text-xl text-black" data-translate="literature.subtitle">Har qanday adabiyotdan zavqlaning</p>
+            </div>
+            
+            <!-- Category Tabs -->
+            <div class="flex justify-center mb-12 fade-in stagger-1">
+                <div class="bg-white rounded-full shadow-2xl p-2 inline-flex backdrop-blur-md border border-white/20">
+                    <button onclick="showLiteratureCategory('all', this)" class="category-btn active px-8 py-3 rounded-full font-semibold transition-all duration-300 transform hover:scale-105 text-black">
+                        <i class="fas fa-th mr-2"></i><span data-translate="literature.all">Barchasi</span>
+                    </button>
+                    <button onclick="showLiteratureCategory('uzbek', this)" class="category-btn px-8 py-3 rounded-full font-semibold transition-all duration-300 transform hover:scale-105 text-black">
+                        <i class="fas fa-flag mr-2"></i><span data-translate="literature.uzbek">O'zbek</span>
+                    </button>
+                    <button onclick="showLiteratureCategory('world', this)" class="category-btn px-8 py-3 rounded-full font-semibold transition-all duration-300 transform hover:scale-105 text-black">
+                        <i class="fas fa-globe mr-2"></i><span data-translate="literature.world">Jahon</span>
+                    </button>
+                    <button onclick="showLiteratureCategory('my-books', this)" class="category-btn px-8 py-3 rounded-full font-semibold transition-all duration-300 transform hover:scale-105 text-black">
+                        <i class="fas fa-bookmark mr-2"></i><span data-translate="literature.my_books">Mening Kitoblarim</span>
+                    </button>
+                    <button onclick="openPDFUploadModal()" class="px-8 py-3 rounded-full font-semibold transition-all duration-300 transform hover:scale-105 bg-purple-600 text-white hover:bg-purple-700">
+                        <i class="fas fa-upload mr-2"></i>PDF Yuklash
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Search and Filter -->
+            <div class="max-w-5xl mx-auto mb-12 fade-in stagger-2">
+                <div class="bg-white rounded-2xl shadow-2xl p-8 backdrop-blur-md border border-white/20">
+                    <div class="grid md:grid-cols-4 gap-4">
+                        <div class="relative">
+                            <div class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
+                                <i class="fas fa-search"></i>
+                            </div>
+                            <input 
+                                type="text" 
+                                id="literatureSearch"
+                                placeholder="Kitoblar qidirish..."
+                                data-translate-placeholder="literature.search"
+                                class="w-full px-6 py-4 pl-12 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 text-lg transition-all duration-300"
+                            >
+                        </div>
+                        <select id="genreFilter" class="px-6 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-purple-500 text-lg transition-all duration-300">
+                            <option value="">Barcha janrlar</option>
+                            <option value="klassika">Klassika</option>
+                            <option value="drama">Drama</option>
+                            <option value="roman">Roman</option>
+                            <option value="sheirlar">She'rlar</option>
+                            <option value="hikoya">Hikoya</option>
+                            <option value="fantastika">Fantastika</option>
+                            <option value="detektiv">Detektiv</option>
+                        </select>
+                        <select id="sortBy" class="px-6 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-purple-500 text-lg transition-all duration-300">
+                            <option value="popular">Eng mashhur</option>
+                            <option value="newest">Eng yangi</option>
+                            <option value="rating">Reyting bo'yicha</option>
+                            <option value="name">Nomi bo'yicha</option>
+                        </select>
+                        <button class="premium-gradient text-white px-6 py-4 rounded-xl font-semibold hover:shadow-lg transition-all duration-300 transform hover:scale-105">
+                            <i class="fas fa-filter mr-2"></i><span data-translate="literature.filter">Filter</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Books Grid -->
+            <div id="literatureBooksGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 fade-in stagger-3">
+                <!-- Books will be loaded dynamically -->
+            </div>
+            
+            <!-- static arrows below grid -->
+            <div class="flex justify-center items-center mt-4">
+                <i id="staticPrevArrow" class="fas fa-chevron-left text-2xl text-gray-400 cursor-pointer mr-8"></i>
+                <i id="staticNextArrow" class="fas fa-chevron-right text-2xl text-gray-400 cursor-pointer ml-8"></i>
+            </div>
+            
+            <!-- Pagination Controls (prev/next) -->
+            <div id="literaturePagination" class="text-center mt-12 fade-in stagger-4"></div>
+            
+            <!-- User PDFs Section -->
+            <div class="mt-16 fade-in stagger-4">
+                <div class="text-center mb-8">
+                    <h3 class="text-2xl font-bold text-black mb-2">Mening PDF Kitoblarim</h3>
+                    <p class="text-gray-600">Yuklangan PDF fayllaringiz</p>
+                </div>
+                <div id="userPDFsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- User PDFs will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- AI Summary Section -->
+    <section id="ai-summary" class="py-20 bg-gray-50">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold mb-4 text-black">AI Book Summary</h2>
+                <p class="text-xl text-black">1 daqiqalik video va 10 ta muhim iqtibos</p>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-8" id="summaryCards">
+                <!-- Summary cards will be loaded here -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Trending Section -->
+    <section id="trending" class="py-20">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold mb-4">Trending Bo'lim</h2>
+                <p class="text-xl text-black">O'zbekistonda va dunyo bo'yicha eng ko'p o'qilayotgan kitoblar</p>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="bg-white rounded-2xl shadow-xl p-8">
+                    <h3 class="text-2xl font-bold mb-6 text-red-600">🇺🇿 O‘zbekistonda Trend</h3>
+                    <div id="uzbekTrending" class="space-y-4">
+                        <!-- Uzbek trending books -->
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-2xl shadow-xl p-8">
+                    <h3 class="text-2xl font-bold mb-6 text-blue-600">🌍 Dunyo Trend</h3>
+                    <div id="worldTrending" class="space-y-4">
+                        <!-- World trending books -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 30-Day Challenge -->
+    <section id="challenge" class="py-20 bg-gradient-to-r from-purple-600 to-pink-600 text-white">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold mb-4">🏆 30 Kunlik Challenge</h2>
+                <p class="text-xl text-white/90">30 kunda 5 ta kitob o'qing, sovrinni qo'lga kiriting!</p>
+            </div>
+            
+            <div class="max-w-4xl mx-auto bg-white/10 backdrop-blur-md rounded-2xl p-8">
+                <div class="grid md:grid-cols-3 gap-8 text-center">
+                    <div>
+                        <div class="text-5xl font-bold mb-2">5</div>
+                        <div class="text-white/80">Kitob</div>
+                    </div>
+                    <div>
+                        <div class="text-5xl font-bold mb-2">30</div>
+                        <div class="text-white/80">Kun</div>
+                    </div>
+                    <div>
+                        <div class="text-5xl font-bold mb-2">🏆</div>
+                        <div class="text-white/80">Sovrin</div>
+                    </div>
+                </div>
+                
+                <div class="text-center mt-8">
+                    <button id="joinChallengeBtn" class="bg-white text-purple-600 px-8 py-3 rounded-full font-semibold hover:bg-gray-100 transition transform hover:scale-105">
+                        Challenge'ga Qo'shilish
+                    </button>
+                </div>
+                
+                <div id="leaderboard" class="mt-8">
+                    <h4 class="text-xl font-semibold mb-4 text-center">Eng faol o'quvchilar</h4>
+                    <div class="space-y-2" id="leaderboardList">
+                        <!-- Leaderboard will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="py-20 bg-gray-50">
+        <div class="container mx-auto px-6">
+            <div class="grid md:grid-cols-2 gap-12 items-center">
+                <div>
+                    <h2 class="text-4xl font-bold mb-6">Biz Haqimizda</h2>
+                    <p class="text-gray-600 mb-6">
+                        Book Journey 2024-yilda tashkil etilgan bo'lib, kitobseverlar uchun 
+                        zamonaviy va qulay platforma yaratish maqsadida ish boshlaganmiz.
+                    </p>
+                    <p class="text-gray-600 mb-8">
+                        Bizning maqsadimiz - kitob o'qish madaniyatini rivojlantirish va 
+                        har bir kishi uchun qulay kitoblar dunyosini yaratish.
+                    </p>
+                    <div class="grid grid-cols-3 gap-6 text-center">
+                        <div>
+                            <div class="text-3xl font-bold text-purple-600">10K+</div>
+                            <div class="text-gray-600">Kitoblar</div>
+                        </div>
+                        <div>
+                            <div class="text-3xl font-bold text-purple-600">5K+</div>
+                            <div class="text-gray-600">Foydalanuvchilar</div>
+                        </div>
+                        <div>
+                            <div class="text-3xl font-bold text-purple-600">50+</div>
+                            <div class="text-gray-600">Mamlakatlar</div>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <img src="https://picsum.photos/seed/library/500/400" alt="Library" class="rounded-2xl shadow-xl">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="gradient-bg text-white py-16 relative overflow-hidden">
+        <div class="absolute inset-0">
+            <div class="absolute top-0 left-0 w-64 h-64 bg-white/10 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
+            <div class="absolute bottom-0 right-0 w-96 h-96 bg-white/10 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
+        </div>
+        
+        <div class="container mx-auto px-6 relative z-10">
+            <div class="grid md:grid-cols-4 gap-8 mb-12">
+                <div>
+                    <div class="flex items-center space-x-3 mb-6">
+                        <div class="w-12 h-12 logo-container rounded-xl flex items-center justify-center">
+                            <div class="w-8 h-8 logo-inner rounded-lg flex items-center justify-center">
+                                <span class="logo-text text-purple-600 font-bold text-lg">BJ</span>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="text-2xl font-bold text-white">Book Journey</span>
+                            <div class="text-white/80 text-sm">Premium Reading Platform</div>
+                        </div>
+                    </div>
+                    <p class="text-white/80 leading-relaxed">Zamonaviy kitoblar platformasi - har bir kishi uchun qulay kitoblar dunyosi</p>
+                    <div class="flex space-x-4 mt-6">
+                        <a href="#" class="w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center hover:bg-white/30 transition-all duration-300 transform hover:scale-110" title="Facebook">
+                            <i class="fab fa-facebook-f text-white"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center hover:bg-white/30 transition-all duration-300 transform hover:scale-110" title="Twitter">
+                            <i class="fab fa-twitter text-white"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center hover:bg-white/30 transition-all duration-300 transform hover:scale-110" title="Instagram">
+                            <i class="fab fa-instagram text-white"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center hover:bg-white/30 transition-all duration-300 transform hover:scale-110" title="Telegram">
+                            <i class="fab fa-telegram text-white"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="text-xl font-bold mb-6 text-white">Tezkor havolalar</h4>
+                    <ul class="space-y-3">
+                        <li><a href="#home" class="text-white/80 hover:text-white transition-all duration-200">Bosh sahifa</a></li>
+                        <li><a href="#literature" class="text-white/80 hover:text-white transition-all duration-200">Adabiyot</a></li>
+                        <li><a href="#ai-search" class="text-white/80 hover:text-white transition-all duration-200">AI Qidiruv</a></li>
+                        <li><a href="#trending" class="text-white/80 hover:text-white transition-all duration-200">Trend</a></li>
+                        <li><a href="#challenge" class="text-white/80 hover:text-white transition-all duration-200">Challenge</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="text-xl font-bold mb-6 text-white">Yordam</h4>
+                    <ul class="space-y-3">
+                        <li><a href="#" class="text-white/80 hover:text-white transition-all duration-200">FAQ</a></li>
+                        <li><a href="#" class="text-white/80 hover:text-white transition-all duration-200">Aloqa</a></li>
+                        <li><a href="#" class="text-white/80 hover:text-white transition-all duration-200">Qo'llanma</a></li>
+                        <li><a href="#" class="text-white/80 hover:text-white transition-all duration-200">Maxfiylik siyosati</a></li>
+                        <li><a href="#" class="text-white/80 hover:text-white transition-all duration-200">Foydalanish shartlari</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="text-xl font-bold mb-6 text-white">Yangiliklar</h4>
+                    <p class="text-white/80 mb-4">Eng so'nggi yangiliklar va takliflardan xabardor bo'ling</p>
+                    <div class="flex space-x-3">
+                        <input type="email" placeholder="Emailingiz..." class="flex-1 px-4 py-3 bg-white/20 backdrop-blur-md border border-white/30 rounded-xl text-white placeholder-white/60 focus:outline-none focus:bg-white/30 transition-all duration-300">
+                        <button class="bg-white text-purple-600 px-6 py-3 rounded-xl font-semibold hover:bg-gray-100 transition-all duration-300 transform hover:scale-105">
+                            Obuna
+                        </button>
+                    </div>
+                    <div class="flex space-x-4 mt-6">
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-white">10K+</div>
+                            <div class="text-white/60 text-sm">Kitoblar</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-white">5K+</div>
+                            <div class="text-white/60 text-sm">Foydalanuvchilar</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-white">4.9</div>
+                            <div class="text-white/60 text-sm">Reyting</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="border-t border-white/20 mt-12 pt-8">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <div class="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-6">
+                        <p class="text-white/60 text-center md:text-left">© 2026 Book Journey. Barcha huquqlar himoyalangan.</p>
+                        <button onclick="window.location.href='admin.html'" class="bg-gray-800 text-white px-6 py-3 rounded-full hover:bg-gray-900 transition-all duration-300 transform hover:scale-105 flex items-center" title="Admin panel">
+                            <i class="fas fa-shield-alt mr-2"></i>Admin Panel
+                        </button>
+                    </div>
+                    <div class="flex items-center space-x-6 mt-4 md:mt-0">
+                        <span class="text-white/60 text-sm">Made with in Uzbekistan</span>
+                        <div class="flex items-center space-x-2">
+                            <img src="https://picsum.photos/seed/payment1/32/20" alt="Payment" class="h-5 rounded">
+                            <img src="https://picsum.photos/seed/payment2/32/20" alt="Payment" class="h-5 rounded">
+                            <img src="https://picsum.photos/seed/payment3/32/20" alt="Payment" class="h-5 rounded">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="static/js/script.js"></script>
+    <script src="static/js/ai-features.js"></script>
+    <script src="static/js/literature-catalog.js"></script>
+    <script src="static/js/scroll-animations.js"></script>
+    <script src="static/js/book-carousel.js"></script>
+    <script src="static/js/button-functionality.js"></script>
+    <script src="static/js/language-system.js"></script>
+    <script src="static/js/pdf-upload-system.js"></script>
+</body>
+</html>
