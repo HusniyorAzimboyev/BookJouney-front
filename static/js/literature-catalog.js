@@ -21,9 +21,9 @@ class LiteratureCatalog {
         return {
             id: apiBook.id,
             title: apiBook.title,
-            author: apiBook.author || 'Unknown Author',
+            author: apiBook.author_name || 'Unknown Author',
             cover: apiBook.cover || 'https://via.placeholder.com/200x300?text=No+Cover',
-            genre: apiBook.genre || 'Unknown',
+            genre: apiBook.genre_name || 'Unknown',
             rating: 4.5, // Default rating since API doesn't provide
             readers: Math.floor(Math.random() * 50000) + 1000, // Random readers count
             trend: `+${Math.floor(Math.random() * 30)}%`, // Random trend
@@ -577,8 +577,50 @@ class LiteratureCatalog {
         
         this.saveUserBooks();
         this.showNotification(`"${book.title}" kitobini o'qishni boshladingiz!`, 'success');
+        
+        // Open PDF viewer with dedicated endpoint
+        this.openPdfViewer(book);
+        
         document.querySelector('.fixed')?.remove();
         this.displayBooks();
+    }
+
+    openPdfViewer(book) {
+        // Use dedicated PDF endpoint with proper security headers
+        const pdfUrl = `${window.CONFIG.API_BASE_URL}api/v1/book/${book.id}/download_pdf/`;
+        
+        // Create PDF viewer modal
+        const pdfModal = document.createElement('div');
+        pdfModal.className = 'fixed inset-0 bg-black/50 z-[9999] flex items-center justify-center p-4';
+        pdfModal.innerHTML = `
+            <div class="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-5xl h-[90vh] flex flex-col">
+                <div class="flex items-center justify-between p-6 border-b dark:border-gray-700">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900 dark:text-white">${book.title}</h2>
+                        <p class="text-gray-600 dark:text-gray-400 text-sm">${book.author}</p>
+                    </div>
+                    <button onclick="this.closest('.fixed').remove()" class="w-10 h-10 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+                        <i class="fas fa-times text-xl text-gray-700 dark:text-gray-300"></i>
+                    </button>
+                </div>
+                <div class="flex-1 overflow-hidden">
+                    <iframe src="${pdfUrl}" class="w-full h-full" style="border: none;"></iframe>
+                </div>
+                <div class="p-4 border-t dark:border-gray-700 flex items-center justify-between bg-gray-50 dark:bg-gray-700">
+                    <p class="text-sm text-gray-600 dark:text-gray-400">PDF Viewer</p>
+                    <a href="${pdfUrl}" download class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition">
+                        <i class="fas fa-download mr-2"></i>Yuklab olish
+                    </a>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(pdfModal);
+        pdfModal.addEventListener('click', (e) => {
+            if (e.target === pdfModal) {
+                pdfModal.remove();
+            }
+        });
     }
     
     loadMoreBooks() {

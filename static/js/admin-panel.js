@@ -3,6 +3,9 @@ class AdminPanel {
     constructor() {
         this.ADMIN_PASSWORD = '329329';
         this.isLoggedIn = false;
+        this.dataSource = localStorage.getItem('adminDataSource') || 'localstorage'; // 'localstorage' or 'api'
+        this.apiBooks = []; // Store API books
+        this.apiAuthors = []; // Store API authors
         this.siteData = this.loadSiteData();
         
         this.init();
@@ -11,6 +14,48 @@ class AdminPanel {
     init() {
         this.setupLogin();
         this.checkAuthStatus();
+        this.loadBooksFromAPI(); // Load books from API on startup
+        this.loadAuthorsFromAPI(); // Load authors from API on startup
+    }
+    
+    setDataSource(source) {
+        this.dataSource = source;
+        localStorage.setItem('adminDataSource', source);
+        if (source === 'api') {
+            this.loadBooksFromAPI();
+            this.loadAuthorsFromAPI();
+        }
+        this.showSection('books');
+        this.showNotification(`Ma'lumot manba: ${source === 'api' ? 'API' : 'localStorage'} ga o'zgartirildi`, 'info');
+    }
+    
+    async loadBooksFromAPI() {
+        try {
+            const result = await apiService.getAllBooks(50); // Fetch all books with pagination
+            if (result.success) {
+                this.apiBooks = result.books || [];
+                console.log('API books loaded:', this.apiBooks.length, 'books');
+                console.log('Sample book:', this.apiBooks[0]); // Debug: log first book structure
+            } else {
+                console.error('Failed to load books from API:', result.error);
+            }
+        } catch (error) {
+            console.error('Error loading books from API:', error);
+        }
+    }
+
+    async loadAuthorsFromAPI() {
+        try {
+            const result = await apiService.getAllAuthors(50); // Fetch all authors with pagination
+            if (result.success) {
+                this.apiAuthors = result.authors || [];
+                console.log('API authors loaded:', this.apiAuthors.length, 'authors');
+            } else {
+                console.error('Failed to load authors from API:', result.error);
+            }
+        } catch (error) {
+            console.error('Error loading authors from API:', error);
+        }
     }
     
     loadSiteData() {
@@ -320,21 +365,37 @@ class AdminPanel {
         return `
             <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
                 <div class="flex items-center justify-between mb-6">
-                    <h2 class="text-xl font-bold text-white">📚 Kitoblar Boshqaruvi</h2>
-                    <button onclick="adminPanel.showAddBookModal()" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition">
-                        <i class="fas fa-plus mr-2"></i>Yangi kitob qo'shish
-                    </button>
+                    <div>
+                        <h2 class="text-xl font-bold text-white">📚 Kitoblar Boshqaruvi</h2>
+                        <p class="text-sm text-gray-400 mt-1">Ma'lumot manba: <span class="font-semibold text-blue-400">${this.dataSource === 'api' ? '🌐 API' : '💾 localStorage'}</span></p>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <select onchange="adminPanel.setDataSource(this.value)" class="px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white">
+                            <option value="localstorage" ${this.dataSource === 'localstorage' ? 'selected' : ''}>💾 localStorage</option>
+                            <option value="api" ${this.dataSource === 'api' ? 'selected' : ''}>🌐 API</option>
+                        </select>
+                        ${this.dataSource === 'api' ? `
+                            <button onclick="adminPanel.showAuthorsListModal()" class="bg-cyan-600 text-white px-4 py-2 rounded-lg hover:bg-cyan-700 transition">
+                                <i class="fas fa-users mr-2"></i>Muallif'lar
+                            </button>
+                        ` : ''}
+                        <button onclick="adminPanel.showAddBookModal()" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition">
+                            <i class="fas fa-plus mr-2"></i>Yangi kitob qo'shish
+                        </button>
+                    </div>
                 </div>
                 
-                <!-- Sub-tabs for Uzbek/World -->
-                <div class="flex space-x-4 mb-6">
-                    <button onclick="adminPanel.showBookCategory('uzbek')" class="book-tab-btn active px-4 py-2 bg-purple-600 text-white rounded-lg">
-                        🇺🇿 O'zbek adabiyoti
-                    </button>
-                    <button onclick="adminPanel.showBookCategory('world')" class="book-tab-btn px-4 py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600">
-                        🌍 Jahon adabiyoti
-                    </button>
-                </div>
+                <!-- Sub-tabs for Uzbek/World (Only for localStorage) -->
+                ${this.dataSource === 'localstorage' ? `
+                    <div class="flex space-x-4 mb-6">
+                        <button onclick="adminPanel.showBookCategory('uzbek')" class="book-tab-btn active px-4 py-2 bg-purple-600 text-white rounded-lg">
+                            🇺🇿 O'zbek adabiyoti
+                        </button>
+                        <button onclick="adminPanel.showBookCategory('world')" class="book-tab-btn px-4 py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600">
+                            🌍 Jahon adabiyoti
+                        </button>
+                    </div>
+                ` : ''}
                 
                 <!-- Books Table -->
                 <div class="overflow-x-auto">
@@ -352,7 +413,7 @@ class AdminPanel {
                             </tr>
                         </thead>
                         <tbody id="booksTableBody">
-                            ${this.generateBooksTableRows('uzbek')}
+                            ${this.generateBooksTableRows(this.dataSource === 'localstorage' ? 'uzbek' : null)}
                         </tbody>
                     </table>
                 </div>
@@ -361,33 +422,43 @@ class AdminPanel {
     }
     
     generateBooksTableRows(category) {
-        const books = this.siteData.books[category];
+        let books = [];
+        
+        if (this.dataSource === 'api') {
+            // Use API books
+            books = this.apiBooks;
+            console.log(books);
+        } else {
+            // Use localStorage books
+            books = this.siteData.books[category] || [];
+        }
+        
         return books.map(book => `
             <tr class="border-b border-gray-700 hover:bg-gray-700/50 transition">
                 <td class="py-3 px-4">
-                    <img src="${book.cover}" alt="${book.title}" class="w-12 h-16 object-cover rounded">
+                    <img src="${book.cover}" alt="${book.title}" class="w-12 h-16 object-cover rounded" onerror="this.src='https://via.placeholder.com/50x66?text=No+Image'">
                 </td>
                 <td class="py-3 px-4 font-medium">${book.title}</td>
-                <td class="py-3 px-4">${book.author}</td>
+                <td class="py-3 px-4">${this.dataSource === 'api' ? (book.author_name || '-') : (book.author || '-')}</td>
                 <td class="py-3 px-4">
-                    <span class="px-2 py-1 bg-purple-500/20 text-purple-400 rounded text-sm">${book.genre}</span>
+                    <span class="px-2 py-1 bg-purple-500/20 text-purple-400 rounded text-sm">${this.dataSource === 'api' ? (book.genre_name || 'N/A') : (book.genre || 'N/A')}</span>
                 </td>
                 <td class="py-3 px-4">
                     <div class="flex items-center">
                         <i class="fas fa-star text-yellow-400 mr-1"></i>
-                        ${book.rating}
+                        ${book.rating || 'N/A'}
                     </div>
                 </td>
-                <td class="py-3 px-4">${book.readers.toLocaleString()}</td>
+                <td class="py-3 px-4">${book.readers ? book.readers.toLocaleString() : 'N/A'}</td>
                 <td class="py-3 px-4">
-                    <span class="text-green-400">${book.trend}</span>
+                    <span class="text-green-400">${book.trend || '-'}</span>
                 </td>
                 <td class="py-3 px-4">
                     <div class="flex space-x-2">
-                        <button onclick="adminPanel.editBook(${book.id}, '${category}')" class="text-blue-400 hover:text-blue-300">
+                        <button onclick="adminPanel.editBook(${book.id})" class="text-blue-400 hover:text-blue-300">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <button onclick="adminPanel.deleteBook(${book.id}, '${category}')" class="text-red-400 hover:text-red-300">
+                        <button onclick="adminPanel.deleteBook(${book.id})" class="text-red-400 hover:text-red-300">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
@@ -698,62 +769,106 @@ class AdminPanel {
     }
     
     showAddBookModal() {
+        const isAPI = this.dataSource === 'api';
+        
         const modal = document.createElement('div');
         modal.className = 'fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4';
+        
+        const formFields = isAPI ? `
+            <div>
+                <label class="block text-white/80 text-sm mb-2">Kitob nomi</label>
+                <input type="text" id="bookTitle" placeholder="Kitob nomi..." class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white" required>
+            </div>
+            
+            <div>
+                <label class="block text-white/80 text-sm mb-2">Muallif ID</label>
+                <div class="flex gap-2">
+                    <input type="number" id="bookAuthorId" placeholder="Muallif ID ni kiriting..." class="flex-1 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white" required>
+                    <button type="button" onclick="adminPanel.showAddAuthorModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+                <p class="text-gray-400 text-xs mt-1">💡 Muallif ID ni bilmaysizmi? Muallif'lar tugmasini bosing</p>
+            </div>
+            
+            <div>
+                <label class="block text-white/80 text-sm mb-2">Tavsif</label>
+                <textarea id="bookDescription" placeholder="Kitob tavsifi..." rows="3" class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white" required></textarea>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-white/80 text-sm mb-2">Sahifalar soni</label>
+                    <input type="number" id="bookPages" placeholder="300" class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white">
+                </div>
+                <div>
+                    <label class="block text-white/80 text-sm mb-2">Narxi</label>
+                    <input type="number" id="bookPrice" placeholder="20000" class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white">
+                </div>
+            </div>
+            
+            <div>
+                <label class="block text-white/80 text-sm mb-2">Zaxira</label>
+                <input type="number" id="bookStock" placeholder="100" class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white">
+            </div>
+        ` : `
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-white/80 text-sm mb-2">Kategoriya</label>
+                    <select id="bookCategory" class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white" required>
+                        <option value="uzbek">O'zbek adabiyoti</option>
+                        <option value="world">Jahon adabiyoti</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-white/80 text-sm mb-2">Janr</label>
+                    <input type="text" id="bookGenre" placeholder="Masalan: Klassika" class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white" required>
+                </div>
+            </div>
+            
+            <div>
+                <label class="block text-white/80 text-sm mb-2">Kitob nomi</label>
+                <input type="text" id="bookTitle" placeholder="Kitob nomi..." class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white" required>
+            </div>
+            
+            <div>
+                <label class="block text-white/80 text-sm mb-2">Muallif</label>
+                <input type="text" id="bookAuthor" placeholder="Muallif nomi..." class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white" required>
+            </div>
+            
+            <div>
+                <label class="block text-white/80 text-sm mb-2">Rasm URL</label>
+                <input type="text" id="bookCover" placeholder="https://..." class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white">
+            </div>
+            
+            <div class="grid grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-white/80 text-sm mb-2">Reyting</label>
+                    <input type="number" id="bookRating" min="0" max="5" step="0.1" placeholder="4.5" class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white">
+                </div>
+                <div>
+                    <label class="block text-white/80 text-sm mb-2">O'quvchilar</label>
+                    <input type="number" id="bookReaders" placeholder="1000" class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white">
+                </div>
+                <div>
+                    <label class="block text-white/80 text-sm mb-2">Trend</label>
+                    <input type="text" id="bookTrend" placeholder="+15%" class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white">
+                </div>
+            </div>
+        `;
+        
         modal.innerHTML = `
             <div class="bg-gray-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                 <div class="p-6">
                     <div class="flex items-center justify-between mb-6">
-                        <h3 class="text-xl font-bold text-white">Yangi kitob qo'shish</h3>
+                        <h3 class="text-xl font-bold text-white">Yangi kitob qo'shish (${isAPI ? '🌐 API' : '💾 localStorage'})</h3>
                         <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-white">
                             <i class="fas fa-times text-xl"></i>
                         </button>
                     </div>
                     
                     <form id="addBookForm" class="space-y-4">
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-white/80 text-sm mb-2">Kategoriya</label>
-                                <select id="bookCategory" class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white">
-                                    <option value="uzbek">O'zbek adabiyoti</option>
-                                    <option value="world">Jahon adabiyoti</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-white/80 text-sm mb-2">Janr</label>
-                                <input type="text" id="bookGenre" placeholder="Masalan: Klassika" class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white">
-                            </div>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-white/80 text-sm mb-2">Kitob nomi</label>
-                            <input type="text" id="bookTitle" placeholder="Kitob nomi..." class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white">
-                        </div>
-                        
-                        <div>
-                            <label class="block text-white/80 text-sm mb-2">Muallif</label>
-                            <input type="text" id="bookAuthor" placeholder="Muallif nomi..." class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white">
-                        </div>
-                        
-                        <div>
-                            <label class="block text-white/80 text-sm mb-2">Rasm URL</label>
-                            <input type="text" id="bookCover" placeholder="https://..." class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white">
-                        </div>
-                        
-                        <div class="grid grid-cols-3 gap-4">
-                            <div>
-                                <label class="block text-white/80 text-sm mb-2">Reyting</label>
-                                <input type="number" id="bookRating" min="0" max="5" step="0.1" placeholder="4.5" class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white">
-                            </div>
-                            <div>
-                                <label class="block text-white/80 text-sm mb-2">O'quvchilar</label>
-                                <input type="number" id="bookReaders" placeholder="1000" class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white">
-                            </div>
-                            <div>
-                                <label class="block text-white/80 text-sm mb-2">Trend</label>
-                                <input type="text" id="bookTrend" placeholder="+15%" class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white">
-                            </div>
-                        </div>
+                        ${formFields}
                         
                         <div class="flex space-x-4 pt-4">
                             <button type="submit" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition flex-1">
@@ -777,7 +892,73 @@ class AdminPanel {
         });
     }
     
-    addNewBook() {
+    async addNewBook() {
+        // Determine data source
+        if (this.dataSource === 'api') {
+            await this.addNewBookAPI();
+        } else {
+            this.addNewBookLocalStorage();
+        }
+    }
+    
+    async addNewBookAPI() {
+        const authorId = document.getElementById('bookAuthorId').value;
+        
+        const bookData = {
+            title: document.getElementById('bookTitle').value,
+            description: document.getElementById('bookDescription').value,
+            pages: parseInt(document.getElementById('bookPages').value) || 0,
+            price: parseInt(document.getElementById('bookPrice').value) || 0,
+            stock: parseInt(document.getElementById('bookStock').value) || 0,
+            author_id: parseInt(authorId)
+        };
+        
+        // Validate required fields
+        if (!bookData.title || !bookData.description) {
+            this.showNotification('Kitob nomi va tavsifi majburiy!', 'error');
+            return;
+        }
+        
+        if (!authorId) {
+            this.showNotification('Muallif tanlang yoki yangi muallif qo\'shing!', 'error');
+            return;
+        }
+        
+        // Show loading state
+        const submitBtn = document.querySelector('#addBookForm button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saqlanmoqda...';
+        
+        try {
+            const result = await apiService.createBook(bookData);
+            
+            if (result.success) {
+                // Add new book to local cache
+                this.apiBooks.push(result.data);
+                
+                // Close modal
+                document.querySelector('.fixed').remove();
+                
+                // Refresh books section
+                this.showSection('books');
+                
+                // Show success message
+                this.showNotification('Kitob muvaffaqiyatli qo\'shildi!', 'success');
+            } else {
+                this.showNotification('Xato: ' + result.error, 'error');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        } catch (error) {
+            console.error('Error adding book:', error);
+            this.showNotification('Kitob qo\'shishda xato!', 'error');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        }
+    }
+    
+    addNewBookLocalStorage() {
         const category = document.getElementById('bookCategory').value;
         const newBook = {
             id: Date.now(),
@@ -803,9 +984,20 @@ class AdminPanel {
         this.showNotification('Kitob muvaffaqiyatli qo\'shildi!', 'success');
     }
     
-    editBook(bookId, category) {
-        const book = this.siteData.books[category].find(b => b.id === bookId);
-        if (!book) return;
+    editBook(bookId) {
+        if (this.dataSource === 'api') {
+            this.editBookAPI(bookId);
+        } else {
+            this.editBookLocalStorage(bookId);
+        }
+    }
+    
+    editBookAPI(bookId) {
+        const book = this.apiBooks.find(b => b.id === bookId);
+        if (!book) {
+            this.showNotification('Kitob topilmadi!', 'error');
+            return;
+        }
         
         // Create edit modal with pre-filled data
         const modal = document.createElement('div');
@@ -814,7 +1006,110 @@ class AdminPanel {
             <div class="bg-gray-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                 <div class="p-6">
                     <div class="flex items-center justify-between mb-6">
-                        <h3 class="text-xl font-bold text-white">Kitobni tahrirlash</h3>
+                        <h3 class="text-xl font-bold text-white">Kitobni tahrirlash (API)</h3>
+                        <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-white">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    
+                    <form id="editBookForm" class="space-y-4">
+                        <input type="hidden" id="editBookId" value="${book.id}">
+                        
+                        <div>
+                            <label class="block text-white/80 text-sm mb-2">Kitob nomi</label>
+                            <input type="text" id="editBookTitle" value="${book.title}" class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-white/80 text-sm mb-2">Muallif</label>
+                            <div class="bg-gray-900 px-4 py-2 rounded-lg text-gray-300 mb-2 text-sm">
+                                ${book.author_name || 'N/A'}
+                            </div>
+                            <label class="block text-white/80 text-sm mb-2">Muallif ID (o'zgarish uchun)</label>
+                            <div class="flex gap-2">
+                                <input type="number" id="editBookAuthorId" placeholder="Yangi muallif ID..." class="flex-1 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white">
+                                <button type="button" onclick="adminPanel.showAuthorsListModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg">
+                                    <i class="fas fa-list"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-white/80 text-sm mb-2">Tavsif</label>
+                            <textarea id="editBookDescription" rows="3" class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white">${book.description || ''}</textarea>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-white/80 text-sm mb-2">Janr</label>
+                            <div class="bg-gray-900 px-4 py-2 rounded-lg text-gray-300 text-sm">
+                                ${book.genre_name || 'N/A'}
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-white/80 text-sm mb-2">Sahifalar soni</label>
+                                <input type="number" id="editBookPages" value="${book.pages || 0}" class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white">
+                            </div>
+                            <div>
+                                <label class="block text-white/80 text-sm mb-2">Narxi</label>
+                                <input type="number" id="editBookPrice" value="${book.price || 0}" class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-white/80 text-sm mb-2">Zaxira</label>
+                            <input type="number" id="editBookStock" value="${book.stock || 0}" class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white">
+                        </div>
+                        
+                        <div class="flex space-x-4 pt-4">
+                            <button type="submit" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition flex-1">
+                                <i class="fas fa-save mr-2"></i>Saqlash
+                            </button>
+                            <button type="button" onclick="this.closest('.fixed').remove()" class="bg-gray-700 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition">
+                                Bekor qilish
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Handle form submission
+        document.getElementById('editBookForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.updateBook();
+        });
+    }
+    
+    editBookLocalStorage(bookId) {
+        // Find book in localStorage
+        let book = null;
+        let category = null;
+        for (let cat in this.siteData.books) {
+            const found = this.siteData.books[cat].find(b => b.id === bookId);
+            if (found) {
+                book = found;
+                category = cat;
+                break;
+            }
+        }
+        
+        if (!book) {
+            this.showNotification('Kitob topilmadi!', 'error');
+            return;
+        }
+        
+        // Create edit modal with localStorage fields
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4';
+        modal.innerHTML = `
+            <div class="bg-gray-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-xl font-bold text-white">Kitobni tahrirlash (localStorage)</h3>
                         <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-white">
                             <i class="fas fa-times text-xl"></i>
                         </button>
@@ -883,7 +1178,80 @@ class AdminPanel {
         });
     }
     
-    updateBook() {
+    async updateBook() {
+        // Determine data source
+        if (this.dataSource === 'api') {
+            await this.updateBookAPI();
+        } else {
+            this.updateBookLocalStorage();
+        }
+    }
+    
+    async updateBookAPI() {
+        const bookId = parseInt(document.getElementById('editBookId').value);
+        const authorId = document.getElementById('editBookAuthorId').value;
+        
+        const bookData = {
+            title: document.getElementById('editBookTitle').value,
+            description: document.getElementById('editBookDescription').value,
+            pages: parseInt(document.getElementById('editBookPages').value) || 0,
+            price: parseInt(document.getElementById('editBookPrice').value) || 0,
+            stock: parseInt(document.getElementById('editBookStock').value) || 0,
+            author_id: parseInt(authorId)
+        };
+        
+        // Validate required fields
+        if (!bookData.title || !bookData.description) {
+            this.showNotification('Kitob nomi va tavsifi majburiy!', 'error');
+            return;
+        }
+        
+        if (!authorId) {
+            this.showNotification('Muallif ID ni kiriting!', 'error');
+            return;
+        }
+        
+        // Show loading state
+        const submitBtn = document.querySelector('#editBookForm button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saqlanmoqda...';
+        
+        try {
+            const result = await apiService.updateBook(bookId, bookData);
+            
+            if (result.success) {
+                // Update local cache
+                const bookIndex = this.apiBooks.findIndex(b => b.id === bookId);
+                if (bookIndex !== -1) {
+                    this.apiBooks[bookIndex] = {
+                        ...this.apiBooks[bookIndex],
+                        ...result.data
+                    };
+                }
+                
+                // Close modal
+                document.querySelector('.fixed').remove();
+                
+                // Refresh books section
+                this.showSection('books');
+                
+                // Show success message
+                this.showNotification('Kitob muvaffaqiyatli yangilandi!', 'success');
+            } else {
+                this.showNotification('Xato: ' + result.error, 'error');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        } catch (error) {
+            console.error('Error updating book:', error);
+            this.showNotification('Kitobni yangilashda xato!', 'error');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        }
+    }
+    
+    updateBookLocalStorage() {
         const bookId = parseInt(document.getElementById('editBookId').value);
         const category = document.getElementById('editBookCategory').value;
         const bookIndex = this.siteData.books[category].findIndex(b => b.id === bookId);
@@ -907,13 +1275,215 @@ class AdminPanel {
         }
     }
     
-    deleteBook(bookId, category) {
-        if (confirm('Bu kitobni o\'chirmoqchimisiz?')) {
-            this.siteData.books[category] = this.siteData.books[category].filter(b => b.id !== bookId);
+    async deleteBook(bookId) {
+        // For API, find the book to get the language
+        let bookToDelete = null;
+        if (this.dataSource === 'api') {
+            bookToDelete = this.apiBooks.find(b => b.id === bookId);
+        } else {
+            bookToDelete = this.siteData.books.uzbek.find(b => b.id === bookId) || this.siteData.books.world.find(b => b.id === bookId);
+        }
+        
+        if (!bookToDelete) {
+            this.showNotification('Kitob topilmadi!', 'error');
+            return;
+        }
+        
+        if (!confirm(`"${bookToDelete.title}" kitobni o'chirmoqchimisiz?`)) {
+            return;
+        }
+        
+        // Determine data source
+        if (this.dataSource === 'api') {
+            await this.deleteBookAPI(bookId);
+        } else {
+            this.deleteBookLocalStorage(bookId);
+        }
+    }
+    
+    async deleteBookAPI(bookId) {
+        try {
+            const result = await apiService.deleteBook(bookId);
+            
+            if (result.success) {
+                // Remove from local cache
+                this.apiBooks = this.apiBooks.filter(b => b.id !== bookId);
+                
+                // Refresh books section
+                this.showSection('books');
+                
+                // Show success message
+                this.showNotification('Kitob o\'chirildi!', 'success');
+            } else {
+                this.showNotification('Xato: ' + result.error, 'error');
+            }
+        } catch (error) {
+            console.error('Error deleting book:', error);
+            this.showNotification('Kitobni o\'chirishda xato!', 'error');
+        }
+    }
+    
+    deleteBookLocalStorage(bookId) {
+        // Find which category the book belongs to
+        let found = false;
+        for (let category in this.siteData.books) {
+            const bookIndex = this.siteData.books[category].findIndex(b => b.id === bookId);
+            if (bookIndex !== -1) {
+                this.siteData.books[category].splice(bookIndex, 1);
+                found = true;
+                break;
+            }
+        }
+        
+        if (found) {
             this.saveSiteData();
             this.showSection('books');
-            this.showNotification('Kitob o\'chirildi!', 'info');
+            this.showNotification('Kitob o\'chirildi!', 'success');
         }
+    }
+    
+    showAddAuthorModal() {
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4';
+        modal.innerHTML = `
+            <div class="bg-gray-800 rounded-2xl max-w-xl w-full max-h-[90vh] overflow-y-auto">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-xl font-bold text-white">Yangi muallif qo'shish</h3>
+                        <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-white">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    
+                    <form id="addAuthorForm" class="space-y-4">
+                        <div>
+                            <label class="block text-white/80 text-sm mb-2">Muallif nomi</label>
+                            <input type="text" id="authorName" placeholder="Muallif nomi..." class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white" required>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-white/80 text-sm mb-2">Yosh</label>
+                            <input type="number" id="authorAge" placeholder="40" class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white">
+                        </div>
+                        
+                        <div class="flex space-x-4 pt-4">
+                            <button type="submit" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition flex-1">
+                                <i class="fas fa-save mr-2"></i>Saqlash
+                            </button>
+                            <button type="button" onclick="this.closest('.fixed').remove()" class="bg-gray-700 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition">
+                                Bekor qilish
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        document.getElementById('addAuthorForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await this.createNewAuthor();
+        });
+    }
+    
+    async createNewAuthor() {
+        const authorData = {
+            name: document.getElementById('authorName').value,
+            age: parseInt(document.getElementById('authorAge').value) || null
+        };
+        
+        if (!authorData.name) {
+            this.showNotification('Muallif nomi majburiy!', 'error');
+            return;
+        }
+        
+        // Show loading state
+        const submitBtn = document.querySelector('#addAuthorForm button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saqlanmoqda...';
+        
+        try {
+            const result = await apiService.createAuthor(authorData);
+            
+            if (result.success) {
+                // Add to local authors list
+                this.apiAuthors.push(result.data);
+                
+                // Close modal
+                document.querySelector('.fixed').remove();
+                
+                // Show success message
+                this.showNotification('Muallif muvaffaqiyatli qo\'shildi!', 'success');
+                
+                // Refresh the book add modal to show new author
+                setTimeout(() => {
+                    this.showAddBookModal();
+                }, 500);
+            } else {
+                this.showNotification('Xato: ' + result.error, 'error');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        } catch (error) {
+            console.error('Error adding author:', error);
+            this.showNotification('Muallif qo\'shishda xato!', 'error');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        }
+    }
+    
+    showAuthorsListModal() {
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4';
+        modal.innerHTML = `
+            <div class="bg-gray-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-xl font-bold text-white">👥 Muallif'lar Ro'yxati</h3>
+                        <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-white">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        ${this.apiAuthors.length > 0 ? `
+                            <div class="bg-gray-700 rounded-lg overflow-hidden">
+                                <div class="grid grid-cols-3 bg-gray-600 font-bold text-white px-4 py-3">
+                                    <div>ID</div>
+                                    <div>Nomi</div>
+                                    <div>Yosh</div>
+                                </div>
+                                ${this.apiAuthors.map(author => `
+                                    <div class="grid grid-cols-3 border-t border-gray-600 px-4 py-3 text-white hover:bg-gray-600/50 transition">
+                                        <div class="font-semibold text-blue-400">${author.id}</div>
+                                        <div>${author.name}</div>
+                                        <div class="text-gray-300">${author.age || 'N/A'}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : `
+                            <div class="bg-gray-700 rounded-lg p-6 text-center text-gray-400">
+                                <i class="fas fa-inbox text-3xl mb-2"></i>
+                                <p>Muallif'lar topilmadi</p>
+                            </div>
+                        `}
+                    </div>
+                    
+                    <div class="flex gap-3 mt-6 pt-6 border-t border-gray-700">
+                        <button onclick="adminPanel.showAddAuthorModal(); this.closest('.fixed').remove();" class="flex-1 bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition">
+                            <i class="fas fa-plus mr-2"></i>Yangi muallif qo'shish
+                        </button>
+                        <button onclick="this.closest('.fixed').remove()" class="bg-gray-700 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition">
+                            Yopish
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
     }
     
     editTrending(type) {

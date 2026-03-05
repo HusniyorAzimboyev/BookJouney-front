@@ -1,6 +1,6 @@
 // Configuration file - loads environment variables
 const CONFIG = {
-  API_BASE_URL: 'http://localhost:8080/',
+  API_BASE_URL: 'http://127.0.0.1:8080/',
   API_ENDPOINT: 'api/v1/book/',
   API_TIMEOUT: 5000,
   BASIC_AUTH: {
